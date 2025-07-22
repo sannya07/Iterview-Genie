@@ -4,10 +4,15 @@ import jwt from "jsonwebtoken";
 import { sendEmail } from '../utils/sendEmail.js';
 import { generateOTP } from '../utils/generateOTP.js';
 import Otp from "../models/Otp.js";
+import {emailcheck}  from  "../utils/useValidateEmail.js";
+import { passwordcheck } from "../utils/useValidatePassword.js";
+
 
 export const verifyOtp=async(req,res)=>{
     const {name,email,password,otp}=req.body;
     try{
+        emailcheck(email);
+        passwordcheck(password);
         const existingOtp=await Otp.findOne({email});
         if(!existingOtp){
             return res.status(400).json({error:"Otp not found, Please register again"});
@@ -34,6 +39,8 @@ export const verifyOtp=async(req,res)=>{
 export const register=async(req,res)=>{
     const {name,email,password}=req.body;
     try{
+        emailcheck(email);
+        passwordcheck(password);
         const existingUser=await User.findOne({email});
         if(existingUser){
             return res.status(400).json({error:"User already exists!"})
@@ -69,6 +76,8 @@ export const register=async(req,res)=>{
 export const login=async(req,res)=>{
     const {email,password}=req.body;
     try{
+        emailcheck(email);
+        passwordcheck(password);
         const user=await User.findOne({email});
         if(!user){
             return res.status(404).json({error:"User not found"});
@@ -78,14 +87,14 @@ export const login=async(req,res)=>{
             return res.status(401).json({error:"Invalid credentials"});
         }
         const token=jwt.sign({userId:user._id}, process.env.JWT_SECRET,{expiresIn: "24h"});
+        res.cookie("token",token);
         res.json({
-            token,
             user:{
                 name:user.name,
                 email:user.email,
             },
         })
-    }catch{
-        res.status(500).json({ error: "Login failed" });
+    }catch(err){
+        res.status(500).json({ error: err.message});
     }
 }
