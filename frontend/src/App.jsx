@@ -6,6 +6,9 @@ import RegisterComponent from './pages/RegisterComponent';
 import LoginComponent from './pages/LoginComponent';
 import Home from './pages/Home';
 import './App.css';
+import Activity from './pages/Activity.jsx';
+import Profile from './pages/Profile.jsx';
+import Report from './pages/Report.jsx';
 
 function App() {
   const token = localStorage.getItem("token");
@@ -18,6 +21,9 @@ function App() {
           <Route path="/register" element={<RegisterComponent />} />
           <Route path="/login" element={<LoginComponent />} />
           <Route path="/home" element={token ? <Home /> : <Navigate to="/login" />} />
+          <Route path="/activity" element={<Activity/>}/>
+          <Route path="/profile" element={<Profile/>}/>
+          <Route path="/report" element={<Report/>}/>
         </Routes>
       </Router>
     </Provider>
