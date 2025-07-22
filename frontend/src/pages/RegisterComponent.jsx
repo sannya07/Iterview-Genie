@@ -1,20 +1,33 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Eye, EyeOff, User, Mail, Lock, CheckCircle, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Eye, EyeOff, User, Mail, Lock, CheckCircle, AlertCircle, Shield, Clock, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const RegisterComponent = () => {
-  const navigate=useNavigate();
+
+  const navigate=useNavigate()
+  
+  const [currentStep, setCurrentStep] = useState('register'); // 'register' or 'otp'
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    password: ''
+    password: '',
+    otp: ''
   });
   
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [focusedField, setFocusedField] = useState('');
+  const [countdown, setCountdown] = useState(0);
+
+  // Countdown timer for OTP resend
+  // useEffect(() => {
+  //   let timer;
+  //   if (countdown > 0) {
+  //     timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+  //   }
+  //   return () => clearTimeout(timer);
+  // }, [countdown]);
 
   const handleChange = (e) => {
     setFormData({
@@ -27,7 +40,7 @@ const RegisterComponent = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleRegister = async (e) => {
     if (e) e.preventDefault();
     setIsLoading(true);
     setMessage({ type: '', text: '' });
@@ -38,15 +51,19 @@ const RegisterComponent = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password
+        })
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        setMessage({ type: 'success', text: 'Registration successful! Welcome aboard!' });
-        setFormData({ name: '', email: '', password: '' });
-        navigate('/login')
+        setMessage({ type: 'success', text: 'OTP sent to your email! Please check your inbox.' });
+        setCurrentStep('otp');
+        setCountdown(300); // 5 minutes countdown
       } else {
         setMessage({ type: 'error', text: data.error || 'Registration failed' });
       }
@@ -55,6 +72,77 @@ const RegisterComponent = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleVerifyOTP = async (e) => {
+    if (e) e.preventDefault();
+    setIsLoading(true);
+    setMessage({ type: '', text: '' });
+
+    try {
+      const response = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage({ type: 'success', text: 'Account created successfully! Redirecting...' });
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+      } else {
+        setMessage({ type: 'error', text: data.error || 'OTP verification failed' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Network error. Please try again.' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendOTP = async () => {
+    if (countdown > 0) return;
+    
+    setIsLoading(true);
+    setMessage({ type: '', text: '' });
+
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage({ type: 'success', text: 'New OTP sent to your email!' });
+        setCountdown(300); // Reset 5 minutes countdown
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Failed to resend OTP' });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Network error. Please try again.' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const FloatingBubble = ({ size, delay, duration, left, top }) => (
@@ -101,7 +189,7 @@ const RegisterComponent = () => {
       {/* Main Container */}
       <div className="relative z-10 w-full max-w-md">
         <div 
-          className="backdrop-blur-lg  bg-white/10 bg-opacity-10 rounded-3xl shadow-2xl p-8 border border-white border-opacity-20 animate-pulse"
+          className="backdrop-blur-lg bg-white/10 bg-opacity-10 rounded-3xl shadow-2xl p-8 border border-white border-opacity-20"
           style={{
             animation: 'slideUp 0.8s ease-out',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
@@ -109,11 +197,33 @@ const RegisterComponent = () => {
         >
           {/* Header */}
           <div className="text-center mb-8">
+            {currentStep === 'otp' && (
+              <button
+                onClick={() => setCurrentStep('register')}
+                className="absolute left-6 top-6 text-blue-300 hover:text-blue-200 transition-colors duration-200"
+              >
+                <ArrowLeft className="w-6 h-6" />
+              </button>
+            )}
+            
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-blue-600 to-blue-500 mb-4 shadow-lg">
-              <User className="w-8 h-8 text-white" />
+              {currentStep === 'register' ? (
+                <User className="w-8 h-8 text-white" />
+              ) : (
+                <Shield className="w-8 h-8 text-white" />
+              )}
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
-            <p className="text-blue-200" style={{ color: '#7ec8e3' }}>Join us and start your journey</p>
+            
+            <h1 className="text-3xl font-bold text-white mb-2">
+              {currentStep === 'register' ? 'Create Account' : 'Verify OTP'}
+            </h1>
+            
+            <p className="text-blue-200" style={{ color: '#7ec8e3' }}>
+              {currentStep === 'register' 
+                ? 'Join us and start your journey' 
+                : `Enter the 6-digit code sent to ${formData.email}`
+              }
+            </p>
           </div>
 
           {/* Message Display */}
@@ -132,116 +242,197 @@ const RegisterComponent = () => {
             </div>
           )}
 
-          {/* Form */}
-          <div className="space-y-6">
-            {/* Name Field */}
-            <div className="relative">
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
-                <User className={`w-5 h-5 transition-colors duration-200 ${
-                  focusedField === 'name' ? 'text-blue-400' : 'text-blue-300'
-                }`} />
-              </div>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                onFocus={() => setFocusedField('name')}
-                onBlur={() => setFocusedField('')}
-                placeholder="Full Name"
-                required
-                className="w-full pl-12 pr-4 py-4 bg-opacity-10 border bg-white/5 border-white border-opacity-20 rounded-xl text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
-                style={{
-                  boxShadow: focusedField === 'name' ? '0 0 20px rgba(0, 12, 102, 0.5)' : 'none'
-                }}
-              />
-            </div>
-
-            {/* Email Field */}
-            <div className="relative">
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
-                <Mail className={`w-5 h-5 transition-colors duration-200 ${
-                  focusedField === 'email' ? 'text-blue-400' : 'text-blue-300'
-                }`} />
-              </div>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                onFocus={() => setFocusedField('email')}
-                onBlur={() => setFocusedField('')}
-                placeholder="Email Address"
-                required
-                className="w-full pl-12 pr-4 py-4 bg-opacity-10 border bg-white/5 border-white border-opacity-20 rounded-xl text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
-                style={{
-                  boxShadow: focusedField === 'email' ? '0 0 20px rgba(0, 12, 102, 0.5)' : 'none'
-                }}
-              />
-            </div>
-
-            {/* Password Field */}
-            <div className="relative">
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
-                <Lock className={`w-5 h-5 transition-colors duration-200 ${
-                  focusedField === 'password' ? 'text-blue-300' : 'text-blue-300'
-                }`} style={{ color: focusedField === 'password' ? '#7ec8e3' : '#93c5fd' }} />
-              </div>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                onFocus={() => setFocusedField('password')}
-                onBlur={() => setFocusedField('')}
-                placeholder="Password"
-                required
-                className="w-full pl-12 pr-12 py-4 bg-white/5 bg-opacity-10 border border-white border-opacity-20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
-                style={{
-                  boxShadow: focusedField === 'password' ? '0 0 20px rgba(126, 200, 227, 0.5)' : 'none'
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-300 hover:text-blue-300 transition-colors duration-200"
-                style={{ color: '#7ec8e3' }}
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-
-            {/* Submit Button */}
-            <div
-              onClick={handleSubmit}
-              className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-semibold rounded-xl shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none cursor-pointer text-center"
-              style={{
-                background: 'linear-gradient(to right, #000C66, #0000FF)',
-                boxShadow: '0 10px 30px rgba(0, 12, 102, 0.4)',
-                opacity: isLoading ? 0.5 : 1,
-                pointerEvents: isLoading ? 'none' : 'auto'
-              }}
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Creating Account...</span>
+          {/* Registration Form */}
+          {currentStep === 'register' && (
+            <div className="space-y-6">
+              {/* Name Field */}
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
+                  <User className={`w-5 h-5 transition-colors duration-200 ${
+                    focusedField === 'name' ? 'text-blue-400' : 'text-blue-300'
+                  }`} />
                 </div>
-              ) : (
-                'Create Account'
-              )}
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  onFocus={() => setFocusedField('name')}
+                  onBlur={() => setFocusedField('')}
+                  placeholder="Full Name"
+                  required
+                  className="w-full pl-12 pr-4 py-4 bg-opacity-10 border bg-white/5 border-white border-opacity-20 rounded-xl text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
+                  style={{
+                    boxShadow: focusedField === 'name' ? '0 0 20px rgba(0, 12, 102, 0.5)' : 'none'
+                  }}
+                />
+              </div>
+
+              {/* Email Field */}
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
+                  <Mail className={`w-5 h-5 transition-colors duration-200 ${
+                    focusedField === 'email' ? 'text-blue-400' : 'text-blue-300'
+                  }`} />
+                </div>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  onFocus={() => setFocusedField('email')}
+                  onBlur={() => setFocusedField('')}
+                  placeholder="Email Address"
+                  required
+                  className="w-full pl-12 pr-4 py-4 bg-opacity-10 border bg-white/5 border-white border-opacity-20 rounded-xl text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
+                  style={{
+                    boxShadow: focusedField === 'email' ? '0 0 20px rgba(0, 12, 102, 0.5)' : 'none'
+                  }}
+                />
+              </div>
+
+              {/* Password Field */}
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
+                  <Lock className={`w-5 h-5 transition-colors duration-200 ${
+                    focusedField === 'password' ? 'text-blue-300' : 'text-blue-300'
+                  }`} style={{ color: focusedField === 'password' ? '#7ec8e3' : '#93c5fd' }} />
+                </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  onFocus={() => setFocusedField('password')}
+                  onBlur={() => setFocusedField('')}
+                  placeholder="Password"
+                  required
+                  className="w-full pl-12 pr-12 py-4 bg-white/5 bg-opacity-10 border border-white border-opacity-20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
+                  style={{
+                    boxShadow: focusedField === 'password' ? '0 0 20px rgba(126, 200, 227, 0.5)' : 'none'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-300 hover:text-blue-300 transition-colors duration-200"
+                  style={{ color: '#7ec8e3' }}
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+
+              {/* Submit Button */}
+              <div
+                onClick={handleRegister}
+                className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-semibold rounded-xl shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none cursor-pointer text-center"
+                style={{
+                  background: 'linear-gradient(to right, #000C66, #0000FF)',
+                  boxShadow: '0 10px 30px rgba(0, 12, 102, 0.4)',
+                  opacity: isLoading ? 0.5 : 1,
+                  pointerEvents: isLoading ? 'none' : 'auto'
+                }}
+              >
+                {isLoading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Sending OTP...</span>
+                  </div>
+                ) : (
+                  'Send OTP'
+                )}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* OTP Verification Form */}
+          {currentStep === 'otp' && (
+            <div className="space-y-6">
+              {/* Countdown Timer */}
+              {countdown > 0 && (
+                <div className="flex items-center justify-center gap-2 text-blue-200 mb-4">
+                  <Clock className="w-4 h-4" />
+                  <span className="text-sm">OTP expires in {formatTime(countdown)}</span>
+                </div>
+              )}
+
+              {/* OTP Input */}
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
+                  <Shield className={`w-5 h-5 transition-colors duration-200 ${
+                    focusedField === 'otp' ? 'text-blue-400' : 'text-blue-300'
+                  }`} />
+                </div>
+                <input
+                  type="text"
+                  name="otp"
+                  value={formData.otp}
+                  onChange={handleChange}
+                  onFocus={() => setFocusedField('otp')}
+                  onBlur={() => setFocusedField('')}
+                  placeholder="Enter 6-digit OTP"
+                  maxLength="6"
+                  required
+                  className="w-full pl-12 pr-4 py-4 bg-opacity-10 border bg-white/5 border-white border-opacity-20 rounded-xl text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 backdrop-blur-sm text-center text-2xl tracking-widest"
+                  style={{
+                    boxShadow: focusedField === 'otp' ? '0 0 20px rgba(0, 12, 102, 0.5)' : 'none'
+                  }}
+                />
+              </div>
+
+              {/* Verify Button */}
+              <div
+                onClick={handleVerifyOTP}
+                className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-semibold rounded-xl shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none cursor-pointer text-center"
+                style={{
+                  background: 'linear-gradient(to right, #000C66, #0000FF)',
+                  boxShadow: '0 10px 30px rgba(0, 12, 102, 0.4)',
+                  opacity: isLoading ? 0.5 : 1,
+                  pointerEvents: isLoading ? 'none' : 'auto'
+                }}
+              >
+                {isLoading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Verifying...</span>
+                  </div>
+                ) : (
+                  'Verify & Create Account'
+                )}
+              </div>
+
+              {/* Resend OTP */}
+              <div className="text-center">
+                <p className="text-blue-200 text-sm mb-2" style={{ color: '#7ec8e3' }}>
+                  Didn't receive the code?
+                </p>
+                <button
+                  onClick={handleResendOTP}
+                  disabled={countdown > 0 || isLoading}
+                  className="text-blue-400 hover:text-blue-300 font-semibold transition-colors duration-200 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ color: countdown > 0 ? '#6b7280' : '#7ec8e3' }}
+                >
+                  {countdown > 0 ? `Resend in ${formatTime(countdown)}` : 'Resend OTP'}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Footer */}
-          <div className="mt-8 text-center">
-            <p className="text-blue-200 text-sm" style={{ color: '#7ec8e3' }}>
-              Already have an account?{' '}
-              <span className="text-blue-400 hover:text-blue-300 font-semibold transition-colors duration-200 hover:underline cursor-pointer" style={{ color: '#7ec8e3' }}>
-                <Link to='/login'>Sign in</Link>
-              </span>
-            </p>
-          </div>
+          {currentStep === 'register' && (
+            <div className="mt-8 text-center">
+              <p className="text-blue-200 text-sm" style={{ color: '#7ec8e3' }}>
+                Already have an account?{' '}
+                <span 
+                  onClick={() => navigate('/login')}
+                  className="text-blue-400 hover:text-blue-300 font-semibold transition-colors duration-200 hover:underline cursor-pointer" 
+                  style={{ color: '#7ec8e3' }}
+                >
+                  Sign in
+                </span>
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
