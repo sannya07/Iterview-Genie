@@ -40,10 +40,11 @@ const LoginComponent = () => {
         body: JSON.stringify(formData)
       });
 
-      const data = await response.json();
+      const data = await response.cookies;
+      console.log(data)
 
       if (response.ok) {
-        const token=data.token;
+        const token=data;
         localStorage.setItem('token',token);
 
         setMessage({ type: 'success', text: 'Login successful! Start Learning!' });
