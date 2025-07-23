@@ -1,5 +1,6 @@
 import express from "express";
-import {register,login, verifyOtp} from "../controllers/authController.js";
+import { mcqget } from "../controllers/aiController.js";
+
 import jwt from 'jsonwebtoken';
 
 export const authenticateToken = (req, res, next) => {
@@ -19,14 +20,9 @@ export const authenticateToken = (req, res, next) => {
   }
 };
 
-
 const router=express.Router();
 
-router.post("/register", register);
-router.post("/login",login);
-router.post("/verify-otp", verifyOtp);
+router.get('/mcq',mcqget);
+// router.get('/mcq',authenticateToken,mcqget);
 
-router.get('/home',authenticateToken,(req,res)=>{
-    res.json({message:`Welcome user ${req.user.userId}`})
-})
 export default router;
