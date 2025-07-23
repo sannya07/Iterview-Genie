@@ -27,38 +27,40 @@ const LoginComponent = () => {
   };
 
   const handleSubmit = async (e) => {
-    if (e) e.preventDefault();
-    setIsLoading(true);
-    setMessage({ type: '', text: '' });
+  e.preventDefault();
+  setIsLoading(true);
+  setMessage({ type: '', text: '' });
 
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
+  try {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // if backend sends HTTP-only cookies (optional)
+      body: JSON.stringify(formData),
+    });
 
-      const data = await response.cookies;
-      console.log(data)
+    const data = await response.json(); // Correct way to get JSON response
 
-      if (response.ok) {
-        const token=data;
-        localStorage.setItem('token',token);
-
-        setMessage({ type: 'success', text: 'Login successful! Start Learning!' });
-        setFormData({ name: '', email: '', password: '' });
-        navigate('/Home')
-      } else {
-        setMessage({ type: 'error', text: data.error || 'Registration failed' });
-      }
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Network error. Please try again.' });
-    } finally {
-      setIsLoading(false);
+    if (response.ok) {
+      // Save token to localStorage
+      localStorage.setItem('token', data.token);
+      console.log('Token saved:', data.token);
+      setMessage({ type: 'success', text: 'Login successful! Start Learning!' });
+      console.log(message.type);
+      setFormData({ email: '', password: '' });
+      navigate('/home');
+    } else {
+      setMessage({ type: 'error', text: data.error || 'Login failed. Please try again.' });
     }
-  };
+  } catch (error) {
+    setMessage({ type: 'error', text: 'Network error. Please try again.' });
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const FloatingBubble = ({ size, delay, duration, left, top }) => (
     <div
@@ -136,83 +138,85 @@ const LoginComponent = () => {
           )}
 
           {/* Form */}
-          <div className="space-y-6">
+          {/* Form */}
+<form onSubmit={handleSubmit} className="space-y-6">
+  {/* Email Field */}
+  <div className="relative">
+    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
+      <Mail className={`w-5 h-5 transition-colors duration-200 ${
+        focusedField === 'email' ? 'text-blue-400' : 'text-blue-300'
+      }`} />
+    </div>
+    <input
+      type="email"
+      name="email"
+      value={formData.email}
+      onChange={handleChange}
+      onFocus={() => setFocusedField('email')}
+      onBlur={() => setFocusedField('')}
+      placeholder="Email Address"
+      required
+      autoComplete="username"
+      className="w-full pl-12 pr-4 py-4 bg-opacity-10 border bg-white/5 border-white border-opacity-20 rounded-xl text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
+      style={{
+        boxShadow: focusedField === 'email' ? '0 0 20px rgba(0, 12, 102, 0.5)' : 'none'
+      }}
+    />
+  </div>
 
-            {/* Email Field */}
-            <div className="relative">
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
-                <Mail className={`w-5 h-5 transition-colors duration-200 ${
-                  focusedField === 'email' ? 'text-blue-400' : 'text-blue-300'
-                }`} />
-              </div>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                onFocus={() => setFocusedField('email')}
-                onBlur={() => setFocusedField('')}
-                placeholder="Email Address"
-                required
-                className="w-full pl-12 pr-4 py-4 bg-opacity-10 border bg-white/5 border-white border-opacity-20 rounded-xl text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
-                style={{
-                  boxShadow: focusedField === 'email' ? '0 0 20px rgba(0, 12, 102, 0.5)' : 'none'
-                }}
-              />
-            </div>
+  {/* Password Field */}
+  <div className="relative">
+    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
+      <Lock className={`w-5 h-5 transition-colors duration-200 ${
+        focusedField === 'password' ? 'text-blue-300' : 'text-blue-300'
+      }`} style={{ color: focusedField === 'password' ? '#7ec8e3' : '#93c5fd' }} />
+    </div>
+    <input
+      type={showPassword ? 'text' : 'password'}
+      name="password"
+      value={formData.password}
+      onChange={handleChange}
+      onFocus={() => setFocusedField('password')}
+      onBlur={() => setFocusedField('')}
+      placeholder="Password"
+      required
+      autoComplete="current-password" 
+      className="w-full pl-12 pr-12 py-4 bg-white/5 bg-opacity-10 border border-white border-opacity-20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
+      style={{
+        boxShadow: focusedField === 'password' ? '0 0 20px rgba(126, 200, 227, 0.5)' : 'none'
+      }}
+    />
+    <button
+      type="button"
+      onClick={() => setShowPassword(!showPassword)}
+      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-300 hover:text-blue-300 transition-colors duration-200"
+      style={{ color: '#7ec8e3' }}
+    >
+      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+    </button>
+  </div>
 
-            {/* Password Field */}
-            <div className="relative">
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
-                <Lock className={`w-5 h-5 transition-colors duration-200 ${
-                  focusedField === 'password' ? 'text-blue-300' : 'text-blue-300'
-                }`} style={{ color: focusedField === 'password' ? '#7ec8e3' : '#93c5fd' }} />
-              </div>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                onFocus={() => setFocusedField('password')}
-                onBlur={() => setFocusedField('')}
-                placeholder="Password"
-                required
-                className="w-full pl-12 pr-12 py-4 bg-white/5 bg-opacity-10 border border-white border-opacity-20 rounded-xl text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-300 backdrop-blur-sm"
-                style={{
-                  boxShadow: focusedField === 'password' ? '0 0 20px rgba(126, 200, 227, 0.5)' : 'none'
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-300 hover:text-blue-300 transition-colors duration-200"
-                style={{ color: '#7ec8e3' }}
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
+  {/* Submit Button */}
+  <button
+    type="submit"
+    disabled={isLoading}
+    className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-semibold rounded-xl shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed text-center"
+    style={{
+      background: 'linear-gradient(to right, #000C66, #0000FF)',
+      boxShadow: '0 10px 30px rgba(0, 12, 102, 0.4)',
+    }}
+  >
+    {isLoading ? (
+      <div className="flex items-center justify-center gap-2">
+        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+        <span>Logging In...</span>
+      </div>
+    ) : (
+      'Login'
+    )}
+  </button>
+</form>
 
-            {/* Submit Button */}
-            <div
-              onClick={handleSubmit}
-              className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-semibold rounded-xl shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none cursor-pointer text-center"
-              style={{
-                background: 'linear-gradient(to right, #000C66, #0000FF)',
-                boxShadow: '0 10px 30px rgba(0, 12, 102, 0.4)',
-                opacity: isLoading ? 0.5 : 1,
-                pointerEvents: isLoading ? 'none' : 'auto'
-              }}
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Logging In...</span>
-                </div>
-              ) : (
-                'Login'
-              )}
-            </div>
-          </div>
 
           {/* Footer */}
           <div className="mt-8 text-center">
