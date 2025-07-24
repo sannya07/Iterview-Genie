@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Provider } from 'react-redux';
-import { store } from './utils/store.js';
+import store  from './utils/store.js';
 import RegisterComponent from './pages/RegisterComponent';
 import LoginComponent from './pages/LoginComponent';
 import Home from './pages/Home';
@@ -9,6 +9,7 @@ import Profile from './pages/Profile.jsx';
 import Report from './pages/Report.jsx';
 import QuizPage from './pages/QuizPage.jsx';
 import LandingPage from './pages/LandingPage.jsx';
+import UpdateProfile from './pages/update-profile.jsx';
 import './App.css';
 import Contact from './pages/Contact.jsx';
 
@@ -48,6 +49,14 @@ function App() {
               <Profile />
             </ProtectedRoute>
           }
+        />
+        <Route
+        path='/update-profile'
+        element={
+          <ProtectedRoute>
+            <UpdateProfile />
+          </ProtectedRoute>
+        }
         />
         <Route
           path="/report"
