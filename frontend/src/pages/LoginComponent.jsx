@@ -77,6 +77,7 @@ const LoginComponent = () => {
   );
 
   return (
+    <>
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #050A30 0%, #000C66 50%, #0000FF 100%)' }}>
       
       {/* Animated Background */}
@@ -265,6 +266,7 @@ const LoginComponent = () => {
         }
       `}</style>
     </div>
+    </>
   );
 };
 

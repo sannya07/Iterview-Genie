@@ -10,6 +10,7 @@ import Profile from './pages/Profile.jsx';
 import Report from './pages/Report.jsx';
 import QuizPage from './pages/QuizPage.jsx';
 import './App.css';
+import LandingPage from './pages/LandingPage.jsx';
 
 function App() {
   const token = localStorage.getItem("token");
@@ -17,7 +18,8 @@ function App() {
   return (
     <Provider store={store}>
       <Routes>
-        <Route path="/" element={<Navigate to={token ? "/home" : "/login"} />} />
+        <Route path='/' element={<LandingPage/>}/>
+        <Route path="/home" element={<Navigate to={token ? "/home" : "/login"} />} />
         <Route path="/quiz/:topic" element={<QuizPage />} />
         <Route path="/register" element={<RegisterComponent />} />
         <Route path="/login" element={<LoginComponent />} />
