@@ -14,7 +14,17 @@ const Home = () => {
     }
   }, [navigate]);
 
-  const topics = ["Java", "Python", "JavaScript", "C++", "React", "DBMS"];
+  const topics = [
+    { name: "Java", desc: "Object-oriented programming for backend and Android" },
+    { name: "Python", desc: "Beginner-friendly scripting and data science tool" },
+    { name: "JavaScript", desc: "Dynamic web programming for the browser" },
+    { name: "C++", desc: "Powerful low-level programming for system-level work" },
+    { name: "React", desc: "Popular frontend library for building UIs" },
+    { name: "DBMS", desc: "Core concepts of database management systems" },
+    { name: "Computer Networks", desc: "Study of internet, protocols, and communication" },
+    { name: "Numerical Aptitude", desc: "Quantitative aptitude for placement & exams" },
+    { name: "SQL", desc: "Structured Query Language for database operations" },
+  ];
 
   return (
     <>
@@ -43,7 +53,6 @@ const Home = () => {
 
         {/* Main content */}
         <div className="relative z-10">
-          {/* Header section with enhanced styling */}
           <div className="text-center mb-16 pt-8">
             <div className="inline-block relative">
               <h1 
@@ -58,17 +67,14 @@ const Home = () => {
               >
                 Choose a Topic
               </h1>
-              
-              {/* Decorative underline */}
               <div className="w-32 h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent mx-auto"></div>
             </div>
-            
+
             <p className="text-xl text-blue-100 mt-6 font-light max-w-2xl mx-auto leading-relaxed">
-              Select your preferred programming language or technology to start your coding journey
+              Select your preferred programming language or technology to start your academic journey
             </p>
           </div>
 
-          {/* Cards grid with enhanced container */}
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 px-4">
               {topics.map((topic, index) => (
@@ -80,13 +86,12 @@ const Home = () => {
                     animation: 'fadeInUp 0.6s ease-out forwards'
                   }}
                 >
-                  <TopicCard topic={topic} />
+                  <TopicCard topic={topic.name} description={topic.desc} />
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Bottom decorative section */}
           <div className="mt-20 text-center">
             <div className="inline-flex items-center space-x-2 text-blue-300 text-sm font-medium">
               <div className="w-8 h-px bg-gradient-to-r from-transparent to-blue-400"></div>
