@@ -39,18 +39,18 @@ const Navbar2 = () => {
           transition={{ duration: 0.1 }}
           className="flex flex-col items-center bg-black text-white md:hidden"
         >
-          <a href="#Signin" className="py-2 hover:text-purple-400" onClick={() => setIsOpen(false)}>
-            Login
-          </a>
-          <a href="#features" className="py-2 hover:text-purple-400" onClick={() => setIsOpen(false)}>
-            Features
-          </a>
-          <a href="#about" className="py-2 hover:text-purple-400" onClick={() => setIsOpen(false)}>
+            <Link to='/register' className="py-2 hover:text-purple-400" onClick={() => setIsOpen(false)}>
+            Sign up
+            </Link>
+            <Link to='/login' className="py-2 hover:text-purple-400" onClick={() => setIsOpen(false)}>
+            Sign in
+            </Link>
+            <Link to='/' className="py-2 hover:text-purple-400" onClick={() => setIsOpen(false)}>
             About
-          </a>
-          <a href="#contact" className="py-2 hover:text-purple-400" onClick={() => setIsOpen(false)}>
+            </Link>
+            <Link to='/contact' className="py-2 hover:text-purple-400" onClick={() => setIsOpen(false)}>
             Contact
-          </a>
+           </Link>
         </motion.div>
       )}
     </nav>
