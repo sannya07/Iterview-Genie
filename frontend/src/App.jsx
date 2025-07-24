@@ -8,6 +8,7 @@ import Home from './pages/Home';
 import Activity from './pages/Activity.jsx';
 import Profile from './pages/Profile.jsx';
 import Report from './pages/Report.jsx';
+import QuizPage from './pages/QuizPage.jsx';
 import './App.css';
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
     <Provider store={store}>
       <Routes>
         <Route path="/" element={<Navigate to={token ? "/home" : "/login"} />} />
+        <Route path="/quiz/:topic" element={<QuizPage />} />
         <Route path="/register" element={<RegisterComponent />} />
         <Route path="/login" element={<LoginComponent />} />
         <Route path="/home" element={token ? <Home /> : <Navigate to="/login" />} />
