@@ -126,7 +126,7 @@ const RegisterComponent = () => {
         setMessage({ type: 'error', text: data.error || 'Failed to resend OTP' });
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Network error. Please try again.' });
+      setMessage({ type: 'error', text: error.message});
     } finally {
       setIsLoading(false);
     }

@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, EyeOff, User, Mail, Lock, CheckCircle, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import {useDispatch} from 'react-redux';
+import { setUser } from '../utils/UserSlice';
 import Navbar2 from '../components/Navbar2';
+import { use } from 'react';
 
 const LoginComponent = () => {
   const navigate=useNavigate();
@@ -15,6 +18,7 @@ const LoginComponent = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const [focusedField, setFocusedField] = useState('');
+  const Dispatch = useDispatch();
 
   const handleChange = (e) => {
     setFormData({
@@ -43,20 +47,22 @@ const LoginComponent = () => {
     });
 
     const data = await response.json(); // Correct way to get JSON response
-
+    console.log(data);
     if (response.ok) {
       // Save token to localStorage
       localStorage.setItem('token', data.token);
-      console.log('Token saved:', data.token);
+      // console.log('Token saved:', data.token);
       setMessage({ type: 'success', text: 'Login successful! Start Learning!' });
-      console.log(message.type);
+      // console.log(message.type);
       setFormData({ email: '', password: '' });
+      // console.log(data.user);
+      Dispatch(setUser(data.user));
       navigate('/home');
     } else {
       setMessage({ type: 'error', text: data.error || 'Login failed. Please try again.' });
     }
   } catch (error) {
-    setMessage({ type: 'error', text: 'Network error. Please try again.' });
+    setMessage({ type: 'error', text: error.message });
   } finally {
     setIsLoading(false);
   }
