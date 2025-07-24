@@ -12,7 +12,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
-app.use("api/ai", airoute);
+app.use("/api/ai", airoute);
 
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
