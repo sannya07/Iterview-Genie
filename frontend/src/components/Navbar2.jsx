@@ -8,23 +8,18 @@ const Navbar2 = () => {
   return (
     <nav className="w-full bg-black text-white py-4 shadow-lg fixed top-0 z-50">
       <div className="container mx-auto flex justify-between items-center px-6">
-        {/* Logo */}
         <div className="text-3xl font-extrabold text-purple-500">
           <a href='/'>Interview Genie.</a>
           </div>
+
         {/* Links for Desktop */}
         <div className="hidden md:flex gap-6">
-          {/* <a href="/signups" className="hover:text-purple-400 transition">
-            Signup
-          </a> */}
-          <Link to='/register'>Sign Up</Link>
-          {/* <a href="/logins" className="hover:text-purple-400 transition">
-            Login
-          </a> */}
-          <Link to='/login'> Sign In</Link>
-          <a href="#contact" className="hover:text-purple-400 transition">
-            Contact
-          </a>
+          <Link to='/' className='hover:text-purple-400 transition'>About</Link>  
+          <Link to='/register' className='hover:text-purple-400 transition'>Sign Up</Link>
+          
+          <Link to='/login' className='hover:text-purple-400'> Sign In</Link>
+          
+          <Link to='/contact' className='hover:text-purple-400'> Contact</Link>
         </div>
 
         {/* Hamburger Menu for Mobile */}

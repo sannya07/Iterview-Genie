@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, EyeOff, User, Mail, Lock, CheckCircle, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import Navbar2 from '../components/Navbar2';
 
 const LoginComponent = () => {
   const navigate=useNavigate();
@@ -79,7 +80,7 @@ const LoginComponent = () => {
   return (
     <>
     <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #050A30 0%, #000C66 50%, #0000FF 100%)' }}>
-      
+      <Navbar2/>
       {/* Animated Background */}
       <div className="absolute inset-0 overflow-hidden">
         <FloatingBubble size="100px" delay="0" duration="6" left="10%" top="20%" />
