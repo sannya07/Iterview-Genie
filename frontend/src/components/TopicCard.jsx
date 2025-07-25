@@ -5,7 +5,7 @@ const TopicCard = ({ topic, description }) => {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate(`/quiz/${encodeURIComponent(topic)}`); // ✅ Fixed
+    navigate(`/quiz/${encodeURIComponent(topic)}`); 
   };
 
   return (
