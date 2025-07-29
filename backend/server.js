@@ -6,6 +6,7 @@ import authRoutes from "./routes/authRoutes.js";
 import airoute from "./routes/airoute.js";
 import quizAttemptRoutes from './routes/quizAttemptRoutes.js';
 import reportRoutes from './routes/reportRoutes.js';
+import morgan from "morgan";
 
 dotenv.config();
 
@@ -16,7 +17,7 @@ app.use(cors({
 }));
 
 app.use(express.json());
-
+app.use(morgan('dev'));
 app.use("/api/auth", authRoutes);
 app.use("/api/ai", airoute);
 app.use("/api/quiz-attempts", quizAttemptRoutes);
