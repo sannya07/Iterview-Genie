@@ -36,7 +36,7 @@ const UpdateProfile = () => {
       //   body: JSON.stringify(formData),
       //   credentials: 'include', // if you're using cookies/session
       // });
-      const response = await fetch('http://localhost:5000/api/auth/update', {
+      const response = await fetch('https://iterview-genie.onrender.com/api/auth/update', {
   method: 'PUT',
   headers: {
     'Content-Type': 'application/json',

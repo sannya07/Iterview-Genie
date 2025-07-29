@@ -8,7 +8,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:5500',  
+        // target: 'http://localhost:5500',  
+        target: 'https://iterview-genie.onrender.com', 
         changeOrigin: true,
         secure: false,
       }
