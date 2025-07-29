@@ -11,7 +11,7 @@ dotenv.config();
 
 const app = express();
 app.use(cors({
-  origin: "http://iterview-genie.vercel.app/", // Reflects the request origin
+  origin: "https://iterview-genie.vercel.app/", // Reflects the request origin
   credentials: true,
 }));
 
