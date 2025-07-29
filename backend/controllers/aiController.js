@@ -7,17 +7,17 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const mcqget = async (req, res) => {
   try {
-    // Get topic and count from query params (with defaults)
+    // Get topic, count, and difficulty from query params (with defaults)
     const topic = req.query.topic || "Java";
     const count = parseInt(req.query.count) || 10;
+    const difficulty = req.query.difficulty || "Medium";
 
     // Prompt for Gemini to generate MCQs in clean JSON format
     const prompt = `
 Generate ${count} multiple-choice questions on the topic "${topic}" programming.
 Each question should include exactly 4 options and one correct answer.
-
+The questions should be at the ${difficulty} difficulty level.
 Return ONLY a raw JSON array (no markdown or explanation) in the following format:
-
 [
   {
     "question": "Your question here?",

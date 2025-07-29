@@ -1,50 +1,91 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import Navbar from "../components/Navbar";
+import jsPDF from "jspdf";
+
+const DIFFICULTY_LEVELS = [
+  { label: "Beginner", emoji: "🟢" },
+  { label: "Easy", emoji: "😀" },
+  { label: "Medium", emoji: "😎" },
+  { label: "Hard", emoji: "🔥" },
+  { label: "Hardcore", emoji: "💀" },
+];
 
 const QuizPage = () => {
-  const location = useLocation();
+  const { topic } = useParams();
   const navigate = useNavigate();
-  const searchParams = new URLSearchParams(location.search);
-  const topic = searchParams.get("topic");
 
+  const [difficulty, setDifficulty] = useState(2); // Default to Medium
+  const [difficultySelected, setDifficultySelected] = useState(false);
   const [questions, setQuestions] = useState([]);
   const [userAnswers, setUserAnswers] = useState({});
   const [score, setScore] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
 
+  // Fetch MCQs only after difficulty is selected
   useEffect(() => {
+    if (!difficultySelected) return;
     const fetchMCQs = async () => {
+      setLoading(true);
       try {
-        const res = await axios.get(`/api/ai/mcq?topic=${encodeURIComponent(topic)}`);
+        const res = await axios.get(`/api/ai/mcq?topic=${encodeURIComponent(topic)}&difficulty=${DIFFICULTY_LEVELS[difficulty].label}`);
         if (res.data?.questions?.length > 0) {
           setQuestions(res.data.questions);
+          setAiError("");
         } else {
+          setAiError("No questions received for this topic.");
           console.error("No questions received");
         }
       } catch (err) {
+        let msg = "Failed to fetch MCQs. Please try again.";
+        if (err.response && err.response.data && err.response.data.message) {
+          if (err.response.data.message.includes("model is overloaded") || err.response.status === 503) {
+            msg = "The quiz generator is busy right now. Please try again in a few minutes.";
+          } else {
+            msg = err.response.data.message;
+          }
+        }
+        setAiError(msg);
         console.error("Failed to fetch MCQs", err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchMCQs();
-  }, [topic]);
+  }, [topic, difficultySelected, difficulty]);
+
+  // Save quiz attempt when finished
+  useEffect(() => {
+    if (questions.length > 0 && Object.keys(userAnswers).length === questions.length) {
+      const saveAttempt = async () => {
+        try {
+          await axios.post('/api/quiz-attempts', {
+            topic,
+            difficulty: DIFFICULTY_LEVELS[difficulty].label,
+            questions: questions.map(q => ({ question: q.question, options: q.options, answer: q.answer })),
+            userAnswers: Object.values(userAnswers),
+            score,
+          }, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
+          });
+        } catch (err) {
+          console.error('Failed to save quiz attempt', err);
+        }
+      };
+      saveAttempt();
+    }
+    // eslint-disable-next-line
+  }, [userAnswers, questions, score, difficulty, topic]);
 
   const handleAnswer = (qIndex, selected) => {
     if (userAnswers[qIndex] !== undefined) return;
     const isCorrect = questions[qIndex]?.answer === selected;
-
-    setUserAnswers((prev) => ({
-      ...prev,
-      [qIndex]: selected
-    }));
-
-    if (isCorrect) {
-      setScore((prev) => prev + 1);
-    }
+    setUserAnswers((prev) => ({ ...prev, [qIndex]: selected }));
+    if (isCorrect) setScore((prev) => prev + 1);
   };
 
   const getScoreColor = () => {
@@ -55,18 +96,86 @@ const QuizPage = () => {
     return "bg-red-600";
   };
 
+  // PDF download logic remains unchanged
+  const handleDownloadQuiz = () => {
+    if (!questions.length) return;
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth() - 20;
+    let y = 15;
+    doc.setFontSize(16);
+    doc.text(`Quiz on ${topic || ''} (${DIFFICULTY_LEVELS[difficulty].label})`, 10, y);
+    y += 10;
+    doc.setFontSize(12);
+    questions.forEach((q, idx) => {
+      if (y > 270) { doc.addPage(); y = 15; }
+      const questionLines = doc.splitTextToSize(`${idx + 1}. ${q.question}`, pageWidth);
+      doc.text(questionLines, 10, y);
+      y += questionLines.length * 8;
+      q.options.forEach((opt, i) => {
+        if (y > 270) { doc.addPage(); y = 15; }
+        const optionLines = doc.splitTextToSize(`   ${String.fromCharCode(65 + i)}. ${opt}`, pageWidth - 4);
+        doc.text(optionLines, 14, y);
+        y += optionLines.length * 7;
+      });
+      if (y > 270) { doc.addPage(); y = 15; }
+      doc.setTextColor(34, 139, 34);
+      const answerLines = doc.splitTextToSize(`   Correct Answer: ${q.answer}`, pageWidth - 4);
+      doc.text(answerLines, 14, y);
+      doc.setTextColor(0, 0, 0);
+      y += answerLines.length * 10;
+    });
+    doc.save(`quiz_${topic || 'download'}_${DIFFICULTY_LEVELS[difficulty].label}.pdf`);
+  };
+
+  // Show difficulty selection if not selected yet
+  if (!difficultySelected) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 p-6">
+          <div className="bg-white/10 p-8 rounded-2xl shadow-xl max-w-md w-full text-center">
+            <h2 className="text-2xl font-bold mb-6 text-white">Select Difficulty</h2>
+            <div className="flex flex-col items-center mb-6">
+              <input
+                type="range"
+                min={0}
+                max={DIFFICULTY_LEVELS.length - 1}
+                value={difficulty}
+                onChange={e => setDifficulty(Number(e.target.value))}
+                className="w-64 accent-blue-600"
+                style={{ background: 'linear-gradient(90deg, #22c55e, #facc15, #ef4444)' }}
+              />
+              <div className="flex justify-between w-64 mt-2">
+                {DIFFICULTY_LEVELS.map((d, i) => (
+                  <div key={d.label} className={`flex flex-col items-center text-xs ${i === difficulty ? 'font-bold text-blue-400' : 'text-gray-400'}`}>
+                    <span style={{ fontSize: 24 }}>{d.emoji}</span>
+                    <span>{d.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <button
+              onClick={() => setDifficultySelected(true)}
+              className="mt-4 px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full shadow-lg transition-all duration-300"
+            >
+              Start Quiz
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Quiz UI (existing code, but add difficulty display)
   return (
     <>
       <Navbar />
-
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-gray-900 p-6 relative">
-
         {/* Subtle Background Pattern */}
         <div className="absolute inset-0 opacity-5">
           <div className="absolute top-20 left-20 w-96 h-96 bg-indigo-500 rounded-full blur-3xl"></div>
           <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-500 rounded-full blur-3xl"></div>
         </div>
-
         <div className="relative z-10">
           <div className="text-center mb-12">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-full mb-4 shadow-lg">
@@ -76,14 +185,29 @@ const QuizPage = () => {
               Quiz on {topic}
             </h1>
             <div className="w-24 h-1 bg-gradient-to-r from-indigo-500 to-blue-500 mx-auto rounded-full"></div>
+            <div className="mt-4 text-lg font-semibold text-blue-300 flex items-center justify-center gap-2">
+              <span style={{ fontSize: 22 }}>{DIFFICULTY_LEVELS[difficulty].emoji}</span>
+              <span>Difficulty: {DIFFICULTY_LEVELS[difficulty].label}</span>
+            </div>
+            {questions.length > 0 && (
+              <button
+                onClick={handleDownloadQuiz}
+                className="mt-6 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full shadow-lg transition-all duration-300"
+              >
+                Download Quiz
+              </button>
+            )}
           </div>
-
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20">
               <div className="relative">
                 <div className="w-12 h-12 border-4 border-gray-700 border-t-indigo-500 rounded-full animate-spin"></div>
               </div>
               <p className="text-center text-lg text-gray-400 mt-6 animate-pulse">Loading...</p>
+            </div>
+          ) : aiError ? (
+            <div className="text-center text-red-400 text-lg font-semibold mt-10">
+              {aiError}
             </div>
           ) : questions.length === 0 ? (
             <div className="text-center text-red-400 text-lg font-semibold mt-10">
@@ -104,16 +228,13 @@ const QuizPage = () => {
                       {q.question}
                     </h2>
                   </div>
-
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 ml-12">
                     {q.options.map((opt, j) => {
                       const selected = userAnswers[i];
                       const isCorrect = q.answer === opt;
                       const isSelected = selected === opt;
-
                       let buttonClasses =
                         "bg-gray-700/50 border-gray-600 text-gray-200 hover:bg-gray-600/60 hover:border-gray-500";
-
                       if (selected !== undefined) {
                         if (isSelected && isCorrect) {
                           buttonClasses =
@@ -129,7 +250,6 @@ const QuizPage = () => {
                             "bg-gray-700/30 border-gray-600/50 text-gray-400";
                         }
                       }
-
                       return (
                         <button
                           key={j}
@@ -142,7 +262,6 @@ const QuizPage = () => {
                       );
                     })}
                   </div>
-
                   {userAnswers[i] !== undefined && (
                     <div className="mt-6 ml-12 animate-fadeIn">
                       {userAnswers[i] === q.answer ? (
@@ -174,7 +293,6 @@ const QuizPage = () => {
               ))}
             </div>
           )}
-
           {/* Score and Go Back */}
           {!loading && questions.length > 0 && (
             <div className="mt-12 flex flex-col items-center gap-6">
@@ -186,7 +304,6 @@ const QuizPage = () => {
                   Final Score: {score} / {questions.length}
                 </span>
               </div>
-
               <button
                 onClick={() => navigate("/home")}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-full font-semibold transition-all shadow-lg"
@@ -196,7 +313,6 @@ const QuizPage = () => {
             </div>
           )}
         </div>
-
         {/* CSS Keyframes Animation */}
         <style>
           {`
