@@ -20,7 +20,7 @@ const Activity = () => {
   useEffect(() => {
     const fetchAttempts = async () => {
       try {
-        const res = await axios.get('/api/quiz-attempts', {
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/quiz-attempts`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },

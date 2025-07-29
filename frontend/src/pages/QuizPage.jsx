@@ -30,7 +30,7 @@ const QuizPage = () => {
     const fetchMCQs = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`/api/ai/mcq?topic=${encodeURIComponent(topic)}&difficulty=${DIFFICULTY_LEVELS[difficulty].label}`);
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/ai/mcq?topic=${encodeURIComponent(topic)}&difficulty=${DIFFICULTY_LEVELS[difficulty].label}`);
         if (res.data?.questions?.length > 0) {
           setQuestions(res.data.questions);
           setAiError("");
@@ -61,7 +61,7 @@ const QuizPage = () => {
     if (questions.length > 0 && Object.keys(userAnswers).length === questions.length) {
       const saveAttempt = async () => {
         try {
-          await axios.post('/api/quiz-attempts', {
+          await axios.post(`${import.meta.env.VITE_API_BASE_URL}/api/quiz-attempts`, {
             topic,
             difficulty: DIFFICULTY_LEVELS[difficulty].label,
             questions: questions.map(q => ({ question: q.question, options: q.options, answer: q.answer })),

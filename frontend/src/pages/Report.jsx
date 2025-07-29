@@ -20,7 +20,7 @@ const Report = () => {
       if (filters.difficulty) params.difficulty = filters.difficulty;
       if (filters.startDate) params.startDate = filters.startDate;
       if (filters.endDate) params.endDate = filters.endDate;
-      const res = await axios.get('/api/quiz-report', {
+      const res = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/quiz-report`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         params,
       });
